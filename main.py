@@ -1,28 +1,35 @@
 import pyautogui
-from PIL import ImageGrab
 import time
-import keyboard
+from pynput import keyboard
+import mss
 
-# try:
-#     while True:
-#         # Get current mouse position
-#         x, y = pyautogui.position()
+x = 183
+y = 484
+target_color = (119, 216, 119)  # Only RGB, no alpha
+running = True
 
-#         # Capture the screen at the mouse location
-#         pixel_color = ImageGrab.grab().getpixel((x, y))
+def on_press(key):
+    global running
+    try:
+        if key.char == 'q':
+            print("Q pressed — stopping loop.")
+            running = False
+            return False
+    except:
+        pass
 
-#         print(f"Mouse at ({x}, {y}) - Color: {pixel_color}", end='\r')
+listener = keyboard.Listener(on_press=on_press)
+listener.start()
 
-#         time.sleep(0.1)  # Small delay to reduce CPU usage
-# except KeyboardInterrupt:
-#     print("\nStopped.")
+with mss.mss() as sct:
+    monitor = {"top": y, "left": x, "width": 1, "height": 1}
+    while running:
+        img = sct.grab(monitor)
+        pixel = img.pixel(0, 0)  # Always (0,0) in a 1x1 image
 
-
-while True:
-    if not keyboard.is_pressed("p"): 
-        print("Running Script")
-    else:
-        print("script stopped")
-    if keyboard.is_pressed("q"):
-      print("app has been stopped")
-      break
+        if pixel == target_color:
+            pyautogui.click(x, y)
+            print("Clicked!")
+        else:
+            print("Waiting...")
+            time.sleep(0.01)  # Small sleep to reduce CPU usage
